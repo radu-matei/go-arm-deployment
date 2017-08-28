@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -22,6 +23,8 @@ import (
 )
 
 const (
+	defaultLocation             = "westeurope"
+	defaultAccountName          = "linuxkit"
 	defaultStorageContainerName = "linuxkitcontainer"
 	defaultStorageBlobName      = "linuxkitimage.vhd"
 )
@@ -36,7 +39,25 @@ var (
 )
 
 func push(args []string) {
-	fmt.Printf("pushing")
+	flags := flag.NewFlagSet("push-azure", flag.ExitOnError)
+	invoked := filepath.Base(os.Args[0])
+
+	flags.Usage = func() {
+		fmt.Printf("USAGE: %s push [options] imagePath\n\n", invoked)
+		fmt.Printf("'imagePath' specified the path (absolute or relative) of a\n")
+		fmt.Printf("VHD image to be pushed in an account storage\n\n")
+		flags.PrintDefaults()
+	}
+
+	resourceGroupName := flags.String("resourceGroupName", "", "Name of the resource group where to upload the image")
+	location := flags.String("location", defaultLocation, "Location of the storage account to upload the image")
+	accountName := flags.String("accountName", defaultAccountName, "Name of the storage account")
+
+	if err := flags.Parse(args); err != nil {
+		log.Fatalf("Unable to parse args: %v", err)
+	}
+
+	fmt.Printf("Invoked with args: %s, %s, %s", *resourceGroupName, *location, *accountName)
 }
 
 func initializeAzureClients(subscriptionID, tenantID, clientID, clientSecret string) {
